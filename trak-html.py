@@ -61,7 +61,8 @@ def getFramesGenerator():
                 (x, y, w, h) = [int(v) for v in box]
                 cv2.rectangle(frame, (x, y), (x + w, y + h),
                     (0, 255, 0), 1)
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (200, 0, 0), 1)
+
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (50, 0, 0), 1)
 
         cv2.putText(frame, 'mot: {}', (8, 120),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.3, (50, 0, 0), 1, cv2.LINE_AA)  # добавляем поверх кадра текст
