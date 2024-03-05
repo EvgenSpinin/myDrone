@@ -81,9 +81,7 @@ while True:
     source.emit("push-buffer", buf)
 
     #cv2.imshow("Frame", frame)
-    #key = cv2.waitKey(1) & 0xFF
-    # if the 's' key is selected, we are going to "select" a bounding
-    # box to track
+
     stdscr.refresh()
     c = stdscr.getch()
 
