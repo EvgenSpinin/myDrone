@@ -51,7 +51,7 @@ def getFramesGenerator():
         success, frame = camera.read()  # Получаем кадр с камеры
         if not success:
             continue  # Пропустить кадр, если не удалось получить
-
+        frame = cv2.rotate(frame, cv2.ROTATE_180)
             # check to see if we are currently tracking an object
         if bbox is not None:
             # grab the new bounding box coordinates of the object
@@ -63,8 +63,9 @@ def getFramesGenerator():
                     (0, 255, 0), 1)
             cv2.rectangle(frame, (x1, y1), (x2, y2), (200, 0, 0), 1)
 
+        #cv2.putText(frame, 'text', (width - 70, height - 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
-        frame = cv2.rotate(frame, cv2.ROTATE_180)
+
         _, buffer = cv2.imencode('.jpg', frame)
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
