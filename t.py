@@ -1,6 +1,6 @@
 # import the necessary packages
 
-#import time
+import time
 import cv2
 import gi.repository.Gst as Gst
 import curses
