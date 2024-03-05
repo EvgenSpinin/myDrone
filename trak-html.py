@@ -8,11 +8,11 @@ app = Flask(__name__)
 
 # camera = cv2.VideoCapture(0)  # Веб-камера
 camera = cv2.VideoCapture(0)  # RTSP-поток
-camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)  # Ширина кадра
-camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)  # Высота кадра
+camera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)  # Ширина кадра
+camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)  # Высота кадра
 
 # Получение первого кадра
-ok, frame = cap.read()
+ok, frame = camera.read()
 if not ok:
     print('Cannot read video file')
     exit()
@@ -44,11 +44,9 @@ y2 = int(center_y + roi_size / 2)
 
 
 
-
-
-
 def getFramesGenerator():
     """Генератор кадров для вывода на веб-страницу."""
+    bbox = None
     while True:
         success, frame = camera.read()  # Получаем кадр с камеры
         if not success:
@@ -62,19 +60,14 @@ def getFramesGenerator():
             if success:
                 (x, y, w, h) = [int(v) for v in box]
                 cv2.rectangle(frame, (x, y), (x + w, y + h),
-                    (0, 255, 0), 2)
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 1)
-
-
-
-
+                    (0, 255, 0), 1)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (200, 0, 0), 1)
 
 
         frame = cv2.rotate(frame, cv2.ROTATE_180)
         _, buffer = cv2.imencode('.jpg', frame)
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-
 
         stdscr.refresh()
         c = stdscr.getch()
@@ -87,15 +80,6 @@ def getFramesGenerator():
             bbox = (x1, y1, roi_size, roi_size)
             tracker = cv2.TrackerCSRT_create()
             tracker.init(frame, bbox)
-
-
-        # if the `q` key was pressed, break from the loop
-        elif c == ord("q"):
-            break
-
-
-
-
 
 @app.route('/video_feed')
 def video_feed():
@@ -117,3 +101,4 @@ if __name__ == '__main__':
 
     # Освобождаем ресурсы камеры после завершения
     camera.release()
+    curses.endwin()
