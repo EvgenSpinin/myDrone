@@ -58,7 +58,7 @@ while True:
     ok, frame = cap.read()
     if not ok:
         break
-
+    frame = cv2.rotate(frame, cv2.ROTATE_180)
 
     # check to see if we are currently tracking an object
     if bbox is not None:
