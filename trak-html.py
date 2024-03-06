@@ -24,6 +24,7 @@ if not ok:
 #tracker = cv2.TrackerCSRT_create()
 #tracker.init(frame, bbox)
 bbox = None
+
 # Инициализация curses
 stdscr = curses.initscr()
 curses.noecho()
@@ -47,6 +48,10 @@ y2 = int(center_y + roi_size / 2)
 def getFramesGenerator():
     """Генератор кадров для вывода на веб-страницу."""
     bbox = None
+    x = 0
+    y = 0
+    cx = 0
+    cy = 0
     while True:
         success, frame = camera.read()  # Получаем кадр с камеры
         if not success:
@@ -61,12 +66,24 @@ def getFramesGenerator():
                 (x, y, w, h) = [int(v) for v in box]
                 cv2.rectangle(frame, (x, y), (x + w, y + h),
                     (0, 255, 0), 1)
+                cx = (x + w)/2
+                cy = (y + h)/2
+
+
 
         cv2.rectangle(frame, (x1, y1), (x2, y2), (50, 0, 0), 1)
 
-        cv2.putText(frame, 'mot: {}', (8, 120),
+        cv2.putText(frame, 'mot: X{}'.format(x), (8, 120),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.3, (50, 0, 0), 1, cv2.LINE_AA)  # добавляем поверх кадра текст
 
+        cv2.putText(frame, 'mot: Y{}'.format(y), (8, 140),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.3, (50, 0, 0), 1, cv2.LINE_AA)  # добавляем поверх кадра текст
+
+        cv2.putText(frame, 'mot: CX{}'.format(cx), (8, 160),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.3, (50, 0, 0), 1, cv2.LINE_AA)  # добавляем поверх кадра текст
+
+        cv2.putText(frame, 'mot: CY{}'.format(cy), (8, 180),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.3, (50, 0, 0), 1, cv2.LINE_AA)  # добавляем поверх кадра текст
 
 
         _, buffer = cv2.imencode('.jpg', frame)
