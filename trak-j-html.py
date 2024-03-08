@@ -2,6 +2,7 @@
 from flask import Flask, render_template, Response, request
 import cv2
 import argparse
+import time
 
 app = Flask(__name__)
 
@@ -80,11 +81,7 @@ def getFramesGenerator():
                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
 
 
-        if controlY <  -0.5:
-            # select the bounding box of the object we want to track (make
-            # sure you press ENTER or SPACE after selecting the ROI)
-            #initBB = cv2.selectROI("Frame", frame, fromCenter=False,
-            #    showCrosshair=True)
+        if controlY  <  -0.5:
             bbox = (x1, y1, roi_size, roi_size)
             tracker = cv2.TrackerCSRT_create()
             tracker.init(frame, bbox)
@@ -103,7 +100,9 @@ def index():
 def control():
     """ Пришел запрос на управления роботом """
     global controlX, controlY
+    controlX, controlY = float(request.args.get('x')) / 100.0, float(request.args.get('y')) / 100.0
     return '', 200, {'Content-Type': 'text/plain'}
+    sleep.time (1)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
