@@ -101,7 +101,6 @@ def index():
 def control():
     """ Пришел запрос на управления роботом """
     global controlX, controlY
-    controlX, controlY = float(request.args.get('x')) / 100.0, float(request.args.get('y')) / 100.0
     return '', 200, {'Content-Type': 'text/plain'}
 
 if __name__ == '__main__':
