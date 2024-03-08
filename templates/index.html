@@ -37,12 +37,36 @@
 		left: 1%;
 	}
 	
+	#joyDiv {
+		width: max(33vw, 33vh);
+		height: max(33vw, 33vh);
+		max-width: 400px;
+		max-height: 400px;
+		position: absolute;
+		bottom: 0%;
+		right: 0%;
+	}
+	
 	</style>
 </head>
 <body>
 	<div id="videoContainer"><img id="video" src="{{ url_for('video_feed') }}"></div>
 	<div id="joyDiv"></div>
 	<script type="text/javascript">
+		var joyParam = {"title": "joystick", 
+						"autoReturnToCenter": true, 
+						"internalFillColor": "#FF0000", 
+						"externalStrokeColor": "#800000", 
+						"externalLineWidth": "5"};
+		var joy = new JoyStick('joyDiv', joyParam);
+		
+		function control(x, y){
+			var xhttp = new XMLHttpRequest();
+			xhttp.open("GET", "control?x=" + x +"&y="+y, true); 
+			xhttp.send();
+		}
+		
+		setInterval(function(){control(joy.GetX(), joy.GetY());}, 50);
 		
 	</script>
 </body>
