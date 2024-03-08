@@ -63,13 +63,7 @@ def getFramesGenerator():
                 (x, y, w, h) = [int(v) for v in box]
                 cv2.rectangle(frame, (x, y), (x + w, y + h),
                     (0, 255, 0), 1)
-                cx = (x + w)/2 #center ROI
-                cy = (y + h)/2
-
-                cv2.line(frame, (cx, 0), (cx, 240), (0, 5, 0), 1)  # рисуем л>
-                cv2.line(frame, (0, cy), (320, cy), (0, 5, 0), 1)  # линия по>
-
-
+                
         cv2.rectangle(frame, (x1, y1), (x2, y2), (50, 0, 0), 1)
 
         cv2.putText(frame, 'mot: X{}'.format(controlY), (8, 120),
