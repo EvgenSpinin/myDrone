@@ -79,6 +79,7 @@ def getFramesGenerator():
             bbox = (x1, y1, roi_size, roi_size)
             tracker = cv2.TrackerCSRT_create()
             tracker.init(frame, bbox)
+            time.sleep(1)
 
 @app.route('/video_feed')
 def video_feed():
