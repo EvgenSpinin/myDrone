@@ -52,26 +52,5 @@ if __name__ == '__main__':
     parser.add_argument("-i", "--ip", type=str, default='192.168.0.112', help="Ip address")
     args = parser.parse_args()
 
-    #serialPort = serial.Serial(args.serial, 9600)   # открываем uart
-
-    def sender():
-        """ функция цикличной отправки пакетов по uart """
-        global controlX, controlY
-        while True:
-            speedA = maxAbsSpeed * (controlY + controlX)    # преобразуем скорость робота,
-            speedB = maxAbsSpeed * (controlY - controlX)    # в зависимости от положения джойстика
-
-            speedA = max(-maxAbsSpeed, min(speedA, maxAbsSpeed))    # функция аналогичная constrain в arduino
-            speedB = max(-maxAbsSpeed, min(speedB, maxAbsSpeed))    # функция аналогичная constrain в arduino
-
-            msg["speedA"], msg["speedB"] = speedScale * speedA, speedScale * speedB     # урезаем скорость и упаковываем
-
-            serialPort.write(json.dumps(msg, ensure_ascii=False).encode("utf8"))  # отправляем пакет в виде json файла
-            time.sleep(1 / sendFreq)
-
-    threading.Thread(target=sender, daemon=True).start()    # запускаем тред отправки пакетов по uart с демоном
-
-    app.run(debug=False, host=args.ip, port=args.port)  # Запускаем Flask-приложение
-
     # Освобождаем ресурсы камеры после завершения
     camera.release()
