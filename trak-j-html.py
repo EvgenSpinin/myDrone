@@ -6,12 +6,16 @@ import time
 
 app = Flask(__name__)
 
+width = 320
+height = 240
+roi_size = 30
+
 controlX, controlY = 0, 0  # глобальные переменные положения джойстика с web-страницы
 
 # camera = cv2.VideoCapture(0)  # Веб-камера
 camera = cv2.VideoCapture(0)  # RTSP-поток
-camera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)  # Ширина кадра
-camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)  # Высота кадра
+camera.set(cv2.CAP_PROP_FRAME_WIDTH, width)  # Ширина кадра
+camera.set(cv2.CAP_PROP_FRAME_HEIGHT, height)  # Высота кадра
 
 # Получение первого кадра
 ok, frame = camera.read()
@@ -30,9 +34,8 @@ bbox = None
 
 
 # Центральные координаты и размер области интереса
-center_x = 320 // 2
-center_y = 240 // 2
-roi_size = 30
+center_x = width // 2
+center_y = height // 2
 
 # Вычисление координат углов ROI
 x1 = int(center_x - roi_size / 2)
@@ -63,13 +66,16 @@ def getFramesGenerator():
                 (x, y, w, h) = [int(v) for v in box]
                 cv2.rectangle(frame, (x, y), (x + w, y + h),
                     (0, 255, 0), 1)
-                
+
+
         cv2.rectangle(frame, (x1, y1), (x2, y2), (50, 0, 0), 1)
 
-        cv2.putText(frame, 'mot: X{}'.format(controlY), (8, 120),
+        cv2.putText(frame, 'JOI X:{}'.format(controlX), (8, 120),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.3, (50, 0, 0), 1, cv2.LINE_AA)  # добавляем поверх кадра текст
+        cv2.putText(frame, 'JOI Y:{}'.format(controlY), (8, 140),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.3, (50, 0, 0), 1, cv2.LINE_AA)  # д>
 
- 
+
         _, buffer = cv2.imencode('.jpg', frame)
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
