@@ -48,16 +48,15 @@ def getObjects(img, thres, nms, draw=True, objects=[]):
 def getFramesGenerator():
     """Генератор кадров для вывода на веб-страницу."""
     while True:
-        success, frame = camera.read()  # Получаем кадр с камеры
+        success, img = camera.read()  # Получаем кадр с камеры
         if not success:
             continue  # Пропустить кадр, если не удалось получить
-        frame = cv2.rotate(frame, cv2.ROTATE_180)
+        img = cv2.rotate(img, cv2.ROTATE_180)
 
 
-        #success, img = cap.read()
-        result, objectInfo = getObjects(frame,0.45,0.2)
+        result, objectInfo = getObjects(img,0.45,0.2)
         
-        _, buffer = cv2.imencode('.jpg', frame)
+        _, buffer = cv2.imencode('.jpg', img)
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
 
