@@ -1,17 +1,49 @@
-# ПЕРЕД запуском создаем папку template и помещаем туда содержимое html-страницы
-from flask import Flask, render_template, Response
+# ПЕРЕД запуском создаем папку template паку с джаваскриптом  и помещаем туда содержимое html-страницы
+from flask import Flask, render_template, Response, request
 import cv2
 import argparse
-
-isee = False
-detect = False
+import time
 
 app = Flask(__name__)
 
+width = 320
+height = 240
+roi_size = 30
+
+controlX, controlY = 0, 0  # глобальные переменные положения джойстика с web-страницы
+
 # camera = cv2.VideoCapture(0)  # Веб-камера
 camera = cv2.VideoCapture(0)  # RTSP-поток
-camera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)  # Ширина кадра
-camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)  # Высота кадра
+camera.set(cv2.CAP_PROP_FRAME_WIDTH, width)  # Ширина кадра
+camera.set(cv2.CAP_PROP_FRAME_HEIGHT, height)  # Высота кадра
+
+# Получение первого кадра
+ok, frame = camera.read()
+if not ok:
+    print('Cannot read video file')
+    exit()
+
+# Выбор области для трекинга
+#bbox = cv2.selectROI(frame, False)
+
+# Инициализация CSRT трекера
+#tracker = cv2.TrackerCSRT_create()
+#tracker.init(frame, bbox)
+bbox = None
+track = True
+var = False
+trbbox = None
+isee = False
+
+# Центральные координаты и размер области интереса
+center_x = width // 2
+center_y = height // 2
+
+# Вычисление координат углов ROI
+x1 = int(center_x - roi_size / 2)
+y1 = int(center_y - roi_size / 2)
+x2 = int(center_x + roi_size / 2)
+y2 = int(center_y + roi_size / 2)
 
 #for DEtection
 classNames = []
@@ -23,57 +55,103 @@ configPath = "/home/pi/myDrone/ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt"
 weightsPath = "/home/pi/myDrone/frozen_inference_graph.pb"
 
 net = cv2.dnn_DetectionModel(weightsPath,configPath)
-net.setInputSize(320,320)
+net.setInputSize(320,240)
 net.setInputScale(1.0/ 127.5)
 net.setInputMean((127.5, 127.5, 127.5))
 net.setInputSwapRB(True)
 
-
-
-def getObjects(img, thres, nms, draw=True, objects=[]):
-    classIds, confs, bbox = net.detect(img,confThreshold=thres,nmsThreshold=nms)
+def getObjects(frame, thres, nms, draw=True, objects=[]):
+    classIds, confs, bbox = net.detect(frame,confThreshold=thres,nmsThreshold=nms)
+    #print(classIds,bbox)
+    global track
+    global var
+    global trbbox
     global isee
-    print(classIds,bbox)
+    var = True
     if len(objects) == 0: objects = classNames
     objectInfo =[]
     if len(classIds) != 0:
         for classId, confidence,box in zip(classIds.flatten(),confs.flatten(),bbox):
             className = classNames[classId - 1]
-            if round(confidence*100,2) > 70:
+            if round(confidence*100,2) > 75:
+                track = True
                 isee = True
                 color = '255'
+                trbbox = box
             else:
-                isee = False
+                #track = False
                 color = '0'
             if className in objects:
                 objectInfo.append([box,className])
                 if (draw):
-                    cv2.rectangle(img,box,(255,int(color),0),thickness=1)
-                    cv2.putText(img,classNames[classId-1].upper(),(box[0]+10,box[1]+30),
+                    cv2.rectangle(frame,box,color=(0,255,int(color)),thickness=1)
+                    cv2.putText(frame,classNames[classId-1].upper(),(box[0]+10,box[1]+30),
                     cv2.FONT_HERSHEY_COMPLEX,0.35,(0,255,0),1)
-                    cv2.putText(img,str(round(confidence*100,2)),(box[0]+70,box[1]+30),
+                    cv2.putText(frame,str(round(confidence*100,2)),(box[0]+70,box[1]+30),
                     cv2.FONT_HERSHEY_COMPLEX,0.35,(0,255,0),1)
 
-    return img,objectInfo
+    return frame,objectInfo
 
 
 def getFramesGenerator():
     """Генератор кадров для вывода на веб-страницу."""
+    bbox = None
+    global track
+    global var
+    global trbbox
+    global isee
+    x = 0
+    y = 0
     while True:
-        success, img = camera.read()  # Получаем кадр с камеры
+        success, frame = camera.read()  # Получаем кадр с камеры
         if not success:
             continue  # Пропустить кадр, если не удалось получить
-        img = cv2.rotate(img, cv2.ROTATE_180)
+        frame = cv2.rotate(frame, cv2.ROTATE_180)
+            # check to see if we are currently tracking an object
+        if bbox is not None:
+            # grab the new bounding box coordinates of the object
+            (success, box) = tracker.update(frame)
+            # check to see if the tracking was a success
+            if success:
+                (x, y, w, h) = [int(v) for v in box]
+                cv2.rectangle(frame, (x, y), (x + w, y + h),
+                    (0, 255, 0), 1)
 
-        cv2.putText(img, 'TEXT: {}'.format(isee), (8, 140),
-              cv2.FONT_HERSHEY_SIMPLEX, 0.3, (50, 0, 0), 1, cv2.LINE_AA) 
 
-        if isee == False:
-            result, objectInfo = getObjects(img,0.60,0.2, objects=['person'])
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (50, 0, 0), 1)
 
-        _, buffer = cv2.imencode('.jpg', img)
+#        cv2.rectangle(frame,trbbox,color=(55,55,0),thickness=1)
+
+        cv2.putText(frame, 'TEXT:  {}'.format(trbbox), (8, 120),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.3, (50, 0, 0), 1, cv2.LINE_AA)  
+
+        if track == False:
+            result, objectInfo = getObjects(frame,0.45, 0.2, objects=['person'])
+
+        _, buffer = cv2.imencode('.jpg', frame)
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+
+        if controlY  <  -0.5:
+            track = True
+            bbox = (x1, y1, roi_size, roi_size)
+            tracker = cv2.TrackerCSRT_create()
+            tracker.init(frame, bbox)
+            time.sleep(1)
+
+        if controlY  >  0.5:
+            track = False
+            bbox = None
+            time.sleep(1)
+
+        if isee == True:
+            track = True
+            isee = False
+            bbox = trbbox
+            tracker = cv2.TrackerCSRT_create()
+            tracker.init(frame, bbox)
+            time.sleep(1)
 
 @app.route('/video_feed')
 def video_feed():
@@ -84,6 +162,14 @@ def video_feed():
 def index():
     """Крутит html-страницу."""
     return render_template('index.html')
+
+@app.route('/control')
+def control():
+    """ Пришел запрос на управления роботом """
+    global controlX, controlY
+    controlX, controlY = float(request.args.get('x')) / 100.0, float(request.args.get('y')) / 100.0
+    return '', 200, {'Content-Type': 'text/plain'}
+    sleep.time (1)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
