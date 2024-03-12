@@ -3,6 +3,9 @@ from flask import Flask, render_template, Response
 import cv2
 import argparse
 
+isee = False
+detect = False
+
 app = Flask(__name__)
 
 # camera = cv2.VideoCapture(0)  # Веб-камера
@@ -25,18 +28,27 @@ net.setInputScale(1.0/ 127.5)
 net.setInputMean((127.5, 127.5, 127.5))
 net.setInputSwapRB(True)
 
+
+
 def getObjects(img, thres, nms, draw=True, objects=[]):
     classIds, confs, bbox = net.detect(img,confThreshold=thres,nmsThreshold=nms)
-    #print(classIds,bbox)
+    global isee
+    print(classIds,bbox)
     if len(objects) == 0: objects = classNames
     objectInfo =[]
     if len(classIds) != 0:
         for classId, confidence,box in zip(classIds.flatten(),confs.flatten(),bbox):
             className = classNames[classId - 1]
+            if round(confidence*100,2) > 70:
+                isee = True
+                color = '255'
+            else:
+                isee = False
+                color = '0'
             if className in objects:
                 objectInfo.append([box,className])
                 if (draw):
-                    cv2.rectangle(img,box,color=(0,255,0),thickness=1)
+                    cv2.rectangle(img,box,(255,int(color),0),thickness=1)
                     cv2.putText(img,classNames[classId-1].upper(),(box[0]+10,box[1]+30),
                     cv2.FONT_HERSHEY_COMPLEX,0.35,(0,255,0),1)
                     cv2.putText(img,str(round(confidence*100,2)),(box[0]+70,box[1]+30),
@@ -53,9 +65,12 @@ def getFramesGenerator():
             continue  # Пропустить кадр, если не удалось получить
         img = cv2.rotate(img, cv2.ROTATE_180)
 
+        cv2.putText(img, 'TEXT: {}'.format(isee), (8, 140),
+              cv2.FONT_HERSHEY_SIMPLEX, 0.3, (50, 0, 0), 1, cv2.LINE_AA) 
 
-        result, objectInfo = getObjects(img,0.45,0.2)
-        
+        if isee == False:
+            result, objectInfo = getObjects(img,0.60,0.2, objects=['person'])
+
         _, buffer = cv2.imencode('.jpg', img)
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')

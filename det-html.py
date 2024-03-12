@@ -5,8 +5,9 @@ import argparse
 
 app = Flask(__name__)
 
-# camera = cv2.VideoCapture(0)  # Веб-камера
-camera = cv2.VideoCapture(0)  # RTSP-поток
+camera = cv2.VideoCapture(0)  # Веб-камера
+#camera = cv2.VideoCapture('4.mp4')  # RTSP-поток
+
 camera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)  # Ширина кадра
 camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)  # Высота кадра
 
@@ -20,7 +21,7 @@ configPath = "/home/pi/myDrone/ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt"
 weightsPath = "/home/pi/myDrone/frozen_inference_graph.pb"
 
 net = cv2.dnn_DetectionModel(weightsPath,configPath)
-net.setInputSize(320,320)
+net.setInputSize(320,240)
 net.setInputScale(1.0/ 127.5)
 net.setInputMean((127.5, 127.5, 127.5))
 net.setInputSwapRB(True)
@@ -54,7 +55,7 @@ def getFramesGenerator():
         img = cv2.rotate(img, cv2.ROTATE_180)
 
 
-        result, objectInfo = getObjects(img,0.45,0.2)
+        result, objectInfo = getObjects(img,0.45, 0.2, objects=['person'])
         
         _, buffer = cv2.imencode('.jpg', img)
         yield (b'--frame\r\n'
